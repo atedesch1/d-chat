@@ -1,6 +1,6 @@
 package cryptography
 
-import(
+import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -13,7 +13,7 @@ var _ = Describe("Cryptography", func() {
 
 	When("Message is sent to the user using its public key", func() {
 		It("Decrypt the message", func() {
-			privateKey := generatePrivateKey()
+			privateKey := GeneratePrivateKey()
 			publicKey := privateKey.PublicKey
 			ciphertext := EncryptMessage(message, publicKey)
 			text := DecryptMessage(ciphertext, privateKey)

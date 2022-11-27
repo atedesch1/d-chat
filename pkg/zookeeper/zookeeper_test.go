@@ -14,14 +14,14 @@ var _ = Describe("ZooKeeper", func() {
 		    permissions from clients`, func() {
 			local := "127.0.0.1"
 			conn, _, err := zk.Connect([]string{local}, time.Second)
-			Expect(err).To(Equal(nil))
+			Expect(err).To(BeNil())
 
 			zkPath := "/zkPath"
 			zkFlags := int32(zk.FlagEphemeral)
 			data := "zkPathData"
 			registeredPath, err := registerUser(conn, zkPath, zkFlags, data)
-			Expect(err).To(Equal(nil))
-			Expect(registeredPath).To(Equal(zkPath[1:]))
+			Expect(err).To(BeNil())
+			Expect(registeredPath).To(Equal(zkPath))
 
 			exists := checkZNode(conn, zkPath)
 			Expect(exists).To(Equal(true))
@@ -35,21 +35,21 @@ var _ = Describe("ZooKeeper", func() {
 			permissions from clients`, func() {
 			local := "127.0.0.1"
 			conn, _, err := zk.Connect([]string{local}, time.Second)
-			Expect(err).To(Equal(nil))
+			Expect(err).To(BeNil())
 		
 			zkPath := "/zkPersistent"
 			zkFlags := int32(0)
 			data := "zkPersistentData"
 			registeredPath, err := registerUser(conn, zkPath, zkFlags, data)
-			Expect(err).To(Equal(nil))
-			Expect(registeredPath).To(Equal(zkPath[1:]))
+			Expect(err).To(BeNil())
+			Expect(registeredPath).To(Equal(zkPath))
 		})
 
 		It(`Should be able to establish connections
 			and retrieve data from persistent nodes`, func() {
 			local := "127.0.0.1"
 			conn, _, err := zk.Connect([]string{local}, time.Second)
-			Expect(err).To(Equal(nil))
+			Expect(err).To(BeNil())
 
 			zkPath := "/zkPersistent"
 			data := "zkPersistentData"
