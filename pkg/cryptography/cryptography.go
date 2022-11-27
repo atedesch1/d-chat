@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func generatePrivateKey() rsa.PrivateKey {
+func GeneratePrivateKey() rsa.PrivateKey {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		log.Fatal(err)
