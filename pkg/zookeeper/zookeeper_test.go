@@ -1,6 +1,6 @@
 package zookeeper
 
-import(
+import (
 	"github.com/go-zookeeper/zk"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
