@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/go-zookeeper/zk"
 	"fmt"
-	"time"
 	"log"
+	"time"
+
+	"github.com/go-zookeeper/zk"
 )
 
 func main() {
