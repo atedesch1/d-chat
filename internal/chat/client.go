@@ -38,7 +38,7 @@ func NewClient(username string, port uint) *Client {
 }
 
 func (c *Client) SendMessage(ctx context.Context, msg *chat_message.ContentMessage) (*chat_message.AckMessage, error) {
-	log.Println("Received message from", msg.From, ". Content:", msg.Content)
+	fmt.Println(msg.From.Username, ":", msg.Content)
 
 	return &chat_message.AckMessage{
 		From:   &c.User,
@@ -61,7 +61,7 @@ func (c *Client) BroadcastMessage(content string) error {
 		if err != nil {
 			return err
 		}
-		log.Println("Ack from", ack.From)
+		log.Println("Ack from", ack.From.Username)
 	}
 
 	return nil

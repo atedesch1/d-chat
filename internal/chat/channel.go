@@ -7,11 +7,11 @@ import (
 
 type Channel struct {
 	id    uint
-	users []chat_message.User
+	users []*chat_message.User
 }
 
 type Peer struct {
-	user   chat_message.User
+	user   *chat_message.User
 	client chat_message.ChatServiceClient
 	conn   *grpc.ClientConn
 }
@@ -22,6 +22,6 @@ func NewChannel(id uint) *Channel {
 	}
 }
 
-func (c *Channel) AddUser(user chat_message.User) {
+func (c *Channel) AddUser(user *chat_message.User) {
 	c.users = append(c.users, user)
 }

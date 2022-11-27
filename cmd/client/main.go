@@ -10,7 +10,8 @@ import (
 var (
 	username = flag.String("username", "default", "The username")
 	cport    = flag.Uint("cport", 50001, "The client port")
-	sport    = flag.Uint("sport", 50002, "The server port")
+	sport1   = flag.Uint("sport1", 50002, "The server port")
+	sport2   = flag.Uint("sport2", 50003, "The server port")
 )
 
 func main() {
@@ -19,11 +20,18 @@ func main() {
 	c := chat.NewClient(*username, *cport)
 
 	channel := chat.NewChannel(0)
-	channel.AddUser(chat_message.User{
+	channel.AddUser(&chat_message.User{
 		Username: "default",
 		Addr: &chat_message.Address{
 			Ip:   "localhost",
-			Port: uint32(*sport),
+			Port: uint32(*sport1),
+		},
+	})
+	channel.AddUser(&chat_message.User{
+		Username: "default",
+		Addr: &chat_message.Address{
+			Ip:   "localhost",
+			Port: uint32(*sport2),
 		},
 	})
 
