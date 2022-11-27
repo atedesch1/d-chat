@@ -12,7 +12,7 @@ const (
 	usersPath = "/users"
 )
 
-func registerUser(conn *zk.Conn, name string, ipv4 string, publicKey string) (string, error) {
+func RegisterUser(conn *zk.Conn, name string, ipv4 string, publicKey string) (string, error) {
 	usersExists := zookeeper.CheckZNode(conn, usersPath)
 	if usersExists == false {
 		log.Fatal("You must set /users path in the ZooKeeper.")
