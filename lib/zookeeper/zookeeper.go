@@ -2,21 +2,19 @@ package zookeeper
 
 import (
 	"github.com/go-zookeeper/zk"
-	"fmt"
-	"time"
 	"log"
 )
 
-func checkZNode(zkConn *zk.Conn, zkPath string) bool {
-	exists, _, err := zkConn.Exists(zkPath)
+func checkZNode(conn *zk.Conn, zkPath string) bool {
+	exists, _, err := conn.Exists(zkPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return exists
 }
 
-func getZNode(zkConn *zk.Conn, zkPath string) string {
-	data, _, err := zkConn.Get(zkPath)
+func getZNode(conn *zk.Conn, zkPath string) string {
+	data, _, err := conn.Get(zkPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,9 +22,11 @@ func getZNode(zkConn *zk.Conn, zkPath string) string {
 	return s
 }
 
-func registerUser(zkConn *zk.Conn, zkPath string, zkFlags int, data string) {
-	exists := checkZNode(zkConn, zkPath)
+func registerUser(conn *zk.Conn, zkPath string, zkFlags int32, data string) (string, error) {
+	exists := checkZNode(conn, zkPath)
 	if exists == false {
-		zkConn.Create(zkPath, []byte(data), zkFlags, zk.WorldACL(zk.PermAll))
+		create, err := conn.Create(zkPath, []byte(data), zkFlags, zk.WorldACL(zk.PermAll))
+		return create, err
 	}
+	return zkPath, nil
 }
