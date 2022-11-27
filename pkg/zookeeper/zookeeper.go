@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func checkZNode(conn *zk.Conn, zkPath string) bool {
+func CheckZNode(conn *zk.Conn, zkPath string) bool {
 	exists, _, err := conn.Exists(zkPath)
 	if err != nil {
 		log.Fatal(err)
@@ -13,7 +13,7 @@ func checkZNode(conn *zk.Conn, zkPath string) bool {
 	return exists
 }
 
-func getZNode(conn *zk.Conn, zkPath string) (string, int32) {
+func GetZNode(conn *zk.Conn, zkPath string) (string, int32) {
 	data, stat, err := conn.Get(zkPath)
 	if err != nil {
 		log.Fatal(err)
@@ -22,8 +22,8 @@ func getZNode(conn *zk.Conn, zkPath string) (string, int32) {
 	return s, stat.Version
 }
 
-func registerUser(conn *zk.Conn, zkPath string, zkFlags int32, data string) (string, error) {
-	exists := checkZNode(conn, zkPath)
+func CreateZNode(conn *zk.Conn, zkPath string, zkFlags int32, data string) (string, error) {
+	exists := CheckZNode(conn, zkPath)
 	if exists == false {
 		create, err := conn.Create(zkPath, []byte(data), zkFlags, zk.WorldACL(zk.PermAll))
 		return create, err
