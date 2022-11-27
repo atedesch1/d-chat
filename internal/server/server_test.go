@@ -20,9 +20,9 @@ var _ = Describe("Server", func() {
 			username := "username"
 			ipv4 := "192.168.0.10"
 			publicKey := "i1RfARNCYn9+K3xmRNTaXG9sVSK6TMgY9l8SDm3MUZ4="
-			path, err := zookeeper.RegisterUser(conn, username, ipv4, publicKey)
-			usersData, _ := zookeeper.GetZNode(conn, zookeeper.usersPath)
-			expectedPath := fmt.Sprintf("%s/id%s", zookeeper.usersPath, usersData)
+			path, err := RegisterUser(conn, username, ipv4, publicKey)
+			usersData, _ := zookeeper.GetZNode(conn, usersPath)
+			expectedPath := fmt.Sprintf("%s/id%s", usersPath, usersData)
 			Expect(err).To(BeNil())
 			Expect(path).To(Equal(expectedPath))
 		})

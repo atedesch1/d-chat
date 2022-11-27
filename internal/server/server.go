@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"os"
 	"bufio"
+	"path/filepath"
 )
 
 const (
 	usersPath = "/users"
 	connPath = "/conn"
-	configFilePath = "/conf/id.txt"
+	configFilePath = "../server/id.txt"
 )
 
 func RegisterUser(conn *zk.Conn, name string, ipv4 string, publicKey string) (string, error) {
@@ -48,7 +49,11 @@ func SetUserOnline(conn *zk.Conn, userNumber int) (string, error) {
 
 func GetIdFromLocal() (int, error) {
 	id := 0
-	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0664)
+	absPath, absError := filepath.Abs(configFilePath)
+	if absError != nil {
+		log.Fatal(absError)
+	}
+	file, err := os.OpenFile(absPath, os.O_RDONLY, 0664)
 	if err != nil {
 		return id, err
 	}
@@ -62,7 +67,11 @@ func GetIdFromLocal() (int, error) {
 }
 
 func CreateIdLocal(id int) {
-	file, openError := os.OpenFile(configFilePath, os.O_CREATE | os.O_RDWR, 0664)
+	absPath, absError := filepath.Abs(configFilePath)
+	if absError != nil {
+		log.Fatal(absError)
+	}
+	file, openError := os.OpenFile(absPath, os.O_RDWR | os.O_CREATE, 0664)
 	if openError != nil {
 		log.Fatal(openError)
 	}
