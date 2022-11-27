@@ -27,8 +27,12 @@ var _ = Describe("Server", func() {
 			usersData, _ := zookeeper.GetZNode(conn, usersPath)
 			clientId, _ = strconv.Atoi(usersData)
 			expectedPath := fmt.Sprintf("%s/id%s", usersPath, usersData)
+			currentConnPath, connErr := SetUserOnline(conn, clientId)
+			expectedConnPath := fmt.Sprintf("%s/id%d", connPath, clientId)
 			Expect(err).To(BeNil())
+			Expect(connErr).To(BeNil())
 			Expect(path).To(Equal(expectedPath))
+			Expect(currentConnPath).To(Equal(expectedConnPath))
 		})
 	})
 
