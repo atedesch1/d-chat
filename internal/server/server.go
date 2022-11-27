@@ -24,7 +24,7 @@ func registerUser(conn *zk.Conn, name string, ipv4 string, publicKey string) (st
 	zookeeper.SetZNode(conn, usersPath, strconv.Itoa(numberOfUsersUpdated), version)
 
 	userPath := fmt.Sprintf("%s/id%d", usersPath, numberOfUsersUpdated)
-	userData := fmt.Sprintf("name\n%s\nipv4\n%s\npublic-key\n%s", name, ipv4, publicKey)
+	userData := fmt.Sprintf("name %s\nipv4 %s\npublic-key %s", name, ipv4, publicKey)
 	flagPermanent := int32(0)
 	ZNodePath, err := zookeeper.CreateZNode(conn, userPath, flagPermanent, userData)
 	return ZNodePath, err
