@@ -1,8 +1,9 @@
-package cryptography
+package cryptography_test
 
 import(
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/decentralized-chat/pkg/cryptography"
 )
 
 var _ = Describe("Cryptography", func() {
@@ -13,10 +14,10 @@ var _ = Describe("Cryptography", func() {
 
 	When("Message is sent to the user using its public key", func() {
 		It("Decrypt the message", func() {
-			privateKey := generatePrivateKey()
+			privateKey := cryptography.generatePrivateKey()
 			publicKey := privateKey.PublicKey
-			ciphertext := EncryptMessage(message, publicKey)
-			text := DecryptMessage(ciphertext, privateKey)
+			ciphertext := cryptography.EncryptMessage(message, publicKey)
+			text := cryptography.DecryptMessage(ciphertext, privateKey)
 			Expect(text).To(Equal(message))
 		})
 	})
