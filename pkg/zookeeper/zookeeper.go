@@ -22,6 +22,14 @@ func GetZNode(conn *zk.Conn, zkPath string) (string, int32) {
 	return s, stat.Version
 }
 
+func SetZNode(conn *zk.Conn, zkPath string, data string, version int32) *zk.Stat {
+	stat, err := conn.Set(zkPath, []byte(data), version)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return stat
+}
+
 func CreateZNode(conn *zk.Conn, zkPath string, zkFlags int32, data string) (string, error) {
 	exists := CheckZNode(conn, zkPath)
 	if exists == false {
