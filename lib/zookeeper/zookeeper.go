@@ -13,13 +13,13 @@ func checkZNode(conn *zk.Conn, zkPath string) bool {
 	return exists
 }
 
-func getZNode(conn *zk.Conn, zkPath string) string {
-	data, _, err := conn.Get(zkPath)
+func getZNode(conn *zk.Conn, zkPath string) (string, int32) {
+	data, stat, err := conn.Get(zkPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	s := string(data[:])
-	return s
+	return s, stat.Version
 }
 
 func registerUser(conn *zk.Conn, zkPath string, zkFlags int32, data string) (string, error) {
