@@ -12,11 +12,11 @@ var _ = Describe("Server", func() {
 	var clientId int
 
 	When("A new user open the client", func() {
+		server := new(Server)
+		server.Init("127.0.0.1:2181")
+
 		It(`Should be able to register its 
 		    information in the raw ZooKeeper server`, func() {
-			server := new(Server)
-			server.Init("127.0.0.1:2181")
-
 			username := "username"
 			ipv4 := "192.168.0.10"
 			publicKey := "i1RfARNCYn9+K3xmRNTaXG9sVSK6TMgY9l8SDm3MUZ4="
@@ -30,6 +30,11 @@ var _ = Describe("Server", func() {
 			Expect(connErr).To(BeNil())
 			Expect(path).To(Equal(expectedPath))
 			Expect(currentConnPath).To(Equal(expectedConnPath))
+		})
+
+		It(`Should be able to get the user's id from the user's name`, func() {
+			userId := server.GetUserIdFromUsername("username")
+			Expect(userId).NotTo(Equal(-1))
 		})
 	})
 
@@ -80,6 +85,30 @@ var _ = Describe("Server", func() {
 			for index, _ := range channelUsersId {
 				Expect(channelUsersId[index]).To(Equal(expectedUsersId[index]))
 			}
+			Expect(statusAdd).To(Equal(true))
+			statusDelete := server.DeleteChannel(channelName)
+			Expect(statusDelete).To(Equal(true))
+		})
+
+		It("Should be able to be removed", func() {
+			channelName := "insert-remove-channel"
+			usernames := [3]string{"mike", "paul", "john"}
+			ipv4 := [3]string{"ip1", "ip2", "ip3"}
+			publicKey := [3]string{"key1", "key2", "key3"}
+			var clientIds []int
+			for index, _ := range usernames {
+				server.RegisterUser(usernames[index], ipv4[index], publicKey[index])
+				usersData, _ := zookeeper.GetZNode(server.conn, usersPath)
+				clientId, _ = strconv.Atoi(usersData)
+				clientIds = append(clientIds, clientId)
+			}
+			server.RegisterChannel(channelName, clientIds[0])
+			statusAdd := server.AddUsersToChannel(channelName, clientIds[1:])
+			channelUsers := server.GetChannelUsers(channelName)
+			fmt.Println(channelUsers)
+			server.DeleteUserFromChannel(channelName, "paul")
+			newChannelUsers := server.GetChannelUsers(channelName)
+			fmt.Println(newChannelUsers)
 			Expect(statusAdd).To(Equal(true))
 			statusDelete := server.DeleteChannel(channelName)
 			Expect(statusDelete).To(Equal(true))

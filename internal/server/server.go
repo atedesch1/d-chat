@@ -146,7 +146,45 @@ func (s *Server) DeleteChannel(channelName string) bool {
 	return false
 }
 
-func (s *Server) DeleteUserFromChannel(channelName string, user string) { }
+func (s *Server) DeleteUserFromChannel(channelName string, user string) bool { 
+	children, _, err := s.conn.Children(channelsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, channelId := range children {
+		data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId))
+	 	currChannelName, currUsers := ParseChannelData(data)
+	 	if currChannelName == channelName {
+			userId := s.GetUserIdFromUsername(user)
+			newData := fmt.Sprintf("channel-name %s\nusers", currChannelName)
+			for _, id := range currUsers {
+				if id == userId {
+					continue
+				}
+				newData += fmt.Sprintf(" id%d", id)
+			}
+			zookeeper.SetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId), newData, version)
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Server) GetUserIdFromUsername(user string) int {
+	children, _, err := s.conn.Children(usersPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, userId := range children {
+		data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", usersPath, userId))
+		username, _, _ := ParseUserData(data)
+		if username == user {
+			userIdConverted, _ := strconv.Atoi(userId[2:])
+			return userIdConverted
+		}
+	}
+	return -1
+}
 
 func GenerateChannelData(channelName string, idList []int) string {
 	data := fmt.Sprintf("channel-name %s\nusers", channelName)
