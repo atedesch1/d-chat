@@ -39,7 +39,10 @@ func (m MainModel) Init() tea.Cmd {
 }
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
 
 	switch msg := msg.(type) {
 
@@ -54,10 +57,17 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case EnteredValidUsernameMsg:
 		m.currentView = channelsView
+		cmds = append(cmds, m.getCurrentModel().Init())
+
+	case ChannelChosenMsg:
+		m.currentView = chatView
+		cmds = append(cmds, m.getCurrentModel().Init())
 	}
 
 	m.models[m.currentView], cmd = m.getCurrentModel().Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m MainModel) View() string {
