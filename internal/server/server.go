@@ -10,6 +10,7 @@ import (
 	"bufio"
 	"path/filepath"
 	"time"
+	"strings"
 )
 
 const (
@@ -84,7 +85,30 @@ func (s *Server) GetChannel(channelName string) {
 }
 
 func (s *Server) DeleteChannel(channelName string) {
+	// children, _, err := s.conn.Children(channelsPath)
+	// if err != nil {
+	//	log.Fatal(err)
+	// }
+	// var delete string
+	// for _, channelId := range children {
+	// 	data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/ch%d", channelsPath, channelId))
+	// }
+}
 
+func ParseChannelData(data string) (string, []int) {
+	temp := strings.Split(data, "\n")
+	channelName := strings.Split(temp[0], " ")[1]
+	
+	var IdList []int
+	IdStringList := strings.Split(temp[1], " ")[1:]
+	for _, IdStr := range IdStringList {
+		Id, err := strconv.Atoi(IdStr[2:])
+		if err != nil {
+			log.Fatal(err)
+		}
+		IdList = append(IdList, Id)
+	}
+	return channelName, IdList
 }
 
 func GetIdFromLocal() (int, error) {

@@ -57,4 +57,17 @@ var _ = Describe("Server", func() {
 			Expect(channelPath).To(Equal(expectedChannelPath))
 		})
 	})
+
+	When("A data is retrieved from a channel", func() {
+		It(`Should parse the data correctly`, func() {
+			data := "channel-name channel\nusers id0 id1 id2 id100 id90 id45"
+			channelName, idList := ParseChannelData(data)
+			channelNameExpected := "channel"
+			Expect(channelName).To(Equal(channelNameExpected))
+			idListExpected := [6]int{0, 1, 2, 100, 90, 45}
+			for index, _ := range idListExpected {
+				Expect(idList[index]).To(Equal(idListExpected[index]))
+			}
+		})
+	})
 })
