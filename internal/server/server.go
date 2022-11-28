@@ -115,6 +115,20 @@ func (s *Server) GetChannelUsers(channelName string) []int {
 	return nil
 }
 
+func (s *Server) GetChannelsName() []string {
+	var channels []string
+	children, _, err := s.conn.Children(channelsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, channelId := range children {
+		data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId))
+		currChannelName, _ := ParseChannelData(data)
+		channels = append(channels, currChannelName)		
+	}
+	return channels
+}
+
 func (s *Server) DeleteChannel(channelName string) bool {
 	children, _, err := s.conn.Children(channelsPath)
 	if err != nil {
@@ -141,6 +155,14 @@ func GenerateChannelData(channelName string, idList []int) string {
 		data += newId
 	}
 	return data
+}
+
+func ParseUserData(data string) (string, string, string) {
+	lines := strings.Split(data, "\n")
+	username := strings.Split(lines[0], " ")[1]
+	ipv4 := strings.Split(lines[1], " ")[1]
+	publicKey := strings.Split(lines[2], " ")[1]
+	return username, ipv4, publicKey
 }
 
 func ParseChannelData(data string) (string, []int) {

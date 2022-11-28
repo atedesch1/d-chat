@@ -85,17 +85,26 @@ var _ = Describe("Server", func() {
 			Expect(statusDelete).To(Equal(true))
 		})
 	})
-
-	When("A data is retrieved from a channel", func() {
-		It(`Should parse the data correctly`, func() {
-			data := "channel-name channel\nusers id0 id1 id2 id100 id90 id45"
-			channelName, idList := ParseChannelData(data)
-			channelNameExpected := "channel"
-			Expect(channelName).To(Equal(channelNameExpected))
-			idListExpected := [6]int{0, 1, 2, 100, 90, 45}
-			for index, _ := range idListExpected {
-				Expect(idList[index]).To(Equal(idListExpected[index]))
-			}
-		})
+	
+	It(`Should parse the data correctly`, func() {
+		data := "channel-name channel\nusers id0 id1 id2 id100 id90 id45"
+		channelName, idList := ParseChannelData(data)
+		channelNameExpected := "channel"
+		Expect(channelName).To(Equal(channelNameExpected))
+		idListExpected := [6]int{0, 1, 2, 100, 90, 45}
+		for index, _ := range idListExpected {
+			Expect(idList[index]).To(Equal(idListExpected[index]))
+		}
+	})
+	
+	It(`Should parse the data correctly`, func() {
+		expectedUsername := "john.doe"
+		expectedIpv4 := "192.168.0.10"
+		expectedPublicKey := "i1RfARNCYn9+K3xmRNTaXG9sVSK6TMgY9l8SDm3MUZ4="
+		data := fmt.Sprintf("name %s\nipv4 %s\npublic-key %s", expectedUsername, expectedIpv4, expectedPublicKey)
+		username, ipv4, publicKey := ParseUserData(data)
+		Expect(username).To(Equal(expectedUsername))
+		Expect(ipv4).To(Equal(expectedIpv4))
+		Expect(publicKey).To(Equal(expectedPublicKey))
 	})
 })
