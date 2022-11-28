@@ -15,6 +15,7 @@ import (
 const (
 	usersPath = "/users"
 	connPath = "/conn"
+	channelsPath = "/channels"
 	configFilePath = "../server/id.txt"
 )
 
@@ -49,15 +50,41 @@ func (s *Server) RegisterUser(name string, ipv4 string, publicKey string) (strin
 	return ZNodePath, err
 }
 
-func (s *Server) SetUserOnline(userNumber int) (string, error) {
+func (s *Server) SetUserOnline(userId int) (string, error) {
 	connExists := zookeeper.CheckZNode(s.conn, connPath)
 	if connExists == false {
 		log.Fatalf("You must set %s path in the ZooKeeper.", connPath)
 	}
 
-	userConnPath := fmt.Sprintf("%s/id%d", connPath, userNumber)
+	userConnPath := fmt.Sprintf("%s/id%d", connPath, userId)
 	ZNodeConnPath, err := zookeeper.CreateZNode(s.conn, userConnPath, zk.FlagEphemeral, "")
 	return ZNodeConnPath, err
+}
+
+func (s *Server) RegisterChannel(channelName string, userId int) (string, error) {
+	channelsExists := zookeeper.CheckZNode(s.conn, channelsPath)
+	if channelsExists == false {
+		log.Fatalf("You must set %s path in the ZooKeeper.", channelsPath)
+	}
+
+	numberOfChannelsString, version := zookeeper.GetZNode(s.conn, channelsPath)
+	numberOfChannelsUpdated, _ := strconv.Atoi(numberOfChannelsString)
+	numberOfChannelsUpdated++
+	zookeeper.SetZNode(s.conn, channelsPath, strconv.Itoa(numberOfChannelsUpdated), version)
+
+	channelPath := fmt.Sprintf("%s/ch%d", channelsPath, numberOfChannelsUpdated)
+	channelData := fmt.Sprintf("channel-name %s\nusers id%d", channelName, userId)
+	flagPermanent := int32(0)
+	ZNodePath, err := zookeeper.CreateZNode(s.conn, channelPath, flagPermanent, channelData)
+	return ZNodePath, err
+}
+
+func (s *Server) GetChannel(channelName string) {
+
+}
+
+func (s *Server) DeleteChannel(channelName string) {
+
 }
 
 func GetIdFromLocal() (int, error) {
