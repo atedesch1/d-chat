@@ -1,34 +1,44 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"time"
+	"flag"
 
-	"github.com/go-zookeeper/zk"
+	"github.com/decentralized-chat/internal/chat"
+	chat_message "github.com/decentralized-chat/pb"
+)
+
+var (
+	username = flag.String("username", "default", "The username")
+	cport    = flag.Uint("cport", 50001, "The client port")
+	sport1   = flag.Uint("sport1", 50002, "The server port")
+	sport2   = flag.Uint("sport2", 50003, "The server port")
 )
 
 func main() {
-	// Constants
-	// zk.FlagEphemeral
-	// zk.FlagPermanent
-	DefaultIp := "127.0.0.1"
-	DefaultPort := "2181"
-	zkPath := "/username"
+	flag.Parse()
 
-	fmt.Println(DefaultIp)
-	fmt.Println(DefaultPort)
+	c := chat.NewClient(*username, *cport)
 
-	conn, _, err := zk.Connect([]string{DefaultIp}, time.Second)
-	conn.Create(zkPath, []byte(DefaultIp), zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
-	if err != nil {
-		log.Fatal(err)
-	}
-	children, stat, ch, err := conn.ChildrenW("/")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%+v %+v\n", children, stat)
-	e := <-ch
-	fmt.Printf("%+v\n", e)
+	channel := chat.NewChannel(0)
+	channel.AddUser(&chat_message.User{
+		Username: "default",
+		Addr: &chat_message.Address{
+			Ip:   "localhost",
+			Port: uint32(*sport1),
+		},
+	})
+	channel.AddUser(&chat_message.User{
+		Username: "default",
+		Addr: &chat_message.Address{
+			Ip:   "localhost",
+			Port: uint32(*sport2),
+		},
+	})
+
+	c.RegisterServer()
+
+	go c.ListenForConnections()
+	go c.DialChannel(*channel)
+
+	c.ListenForInput()
 }

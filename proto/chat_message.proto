@@ -1,0 +1,32 @@
+
+syntax = "proto3";
+option go_package = "github.com/decentralized-chat/chat_message";
+package chat_message;
+
+import "google/protobuf/timestamp.proto";
+
+message Address {
+  string ip = 1;
+  uint32 port = 2;
+}
+
+message User {
+  string username = 1;
+  Address addr = 2;
+}
+
+
+message ContentMessage {
+  User from = 1;
+  google.protobuf.Timestamp sent_at = 2;
+  string content = 3; 
+}
+
+message AckMessage {
+  User from = 1;
+  google.protobuf.Timestamp sent_at = 2;
+}
+
+service ChatService {
+  rpc SendMessage(ContentMessage) returns (AckMessage);
+}
