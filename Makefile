@@ -1,4 +1,7 @@
-all: client
+all: app protogen client
+
+app: cmd/app/main.go
+	go build -o bin/app cmd/app/*
 
 client: cmd/client/main.go
 	go build -o bin/client cmd/client/*
