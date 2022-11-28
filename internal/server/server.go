@@ -84,31 +84,37 @@ func (s *Server) GetChannel(channelName string) {
 
 }
 
-func (s *Server) DeleteChannel(channelName string) {
-	// children, _, err := s.conn.Children(channelsPath)
-	// if err != nil {
-	//	log.Fatal(err)
-	// }
-	// var delete string
-	// for _, channelId := range children {
-	// 	data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/ch%d", channelsPath, channelId))
-	// }
+func (s *Server) DeleteChannel(channelName string) bool {
+	children, _, err := s.conn.Children(channelsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, channelId := range children {
+		data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId))
+		currChannelName, _ := ParseChannelData(data)
+		if currChannelName == channelName {
+			deletePath := fmt.Sprintf("%s/%s", channelsPath, channelId)
+			zookeeper.DeleteZNode(s.conn, deletePath, version)
+			return true
+		}
+	}
+	return false
 }
 
 func ParseChannelData(data string) (string, []int) {
 	temp := strings.Split(data, "\n")
 	channelName := strings.Split(temp[0], " ")[1]
 	
-	var IdList []int
-	IdStringList := strings.Split(temp[1], " ")[1:]
-	for _, IdStr := range IdStringList {
-		Id, err := strconv.Atoi(IdStr[2:])
+	var idList []int
+	idStringList := strings.Split(temp[1], " ")[1:]
+	for _, idStr := range idStringList {
+		id, err := strconv.Atoi(idStr[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
-		IdList = append(IdList, Id)
+		idList = append(idList, id)
 	}
-	return channelName, IdList
+	return channelName, idList
 }
 
 func GetIdFromLocal() (int, error) {

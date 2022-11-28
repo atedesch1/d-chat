@@ -43,18 +43,25 @@ var _ = Describe("Server", func() {
 	})
 
 	When("A user creates a new channel", func() {
+		server := new(Server)
+		server.Init("127.0.0.1:2181")
+		userId := 1
+
 		It(`Should stores the channel name and
 			the users connected to it`, func() {
-			server := new(Server)
-			server.Init("127.0.0.1:2181")
-
 			channelName := "channelname"
-			userId := 1
 			channelPath, err := server.RegisterChannel(channelName, userId)
 			channelData, _ := zookeeper.GetZNode(server.conn, channelsPath)
 			expectedChannelPath := fmt.Sprintf("%s/ch%s", channelsPath, channelData)
 			Expect(err).To(BeNil())
 			Expect(channelPath).To(Equal(expectedChannelPath))
+		})
+
+		It(`Should be able to delete this channel`, func() {
+			channelName := "deletedchannel"
+			server.RegisterChannel(channelName, userId)
+			status := server.DeleteChannel(channelName)
+			Expect(status).To(Equal(true))
 		})
 	})
 

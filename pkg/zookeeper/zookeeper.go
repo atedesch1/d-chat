@@ -38,3 +38,10 @@ func CreateZNode(conn *zk.Conn, zkPath string, zkFlags int32, data string) (stri
 	}
 	return zkPath, nil
 }
+
+func DeleteZNode(conn *zk.Conn, path string, version int32) {
+	err := conn.Delete(path, version)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
