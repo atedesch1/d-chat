@@ -3,6 +3,7 @@ option go_package = "github.com/decentralized-chat/chat_message";
 package chat_message;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 message Address {
   string ip = 1;
@@ -25,11 +26,17 @@ message AckMessage {
   google.protobuf.Timestamp sent_at = 2;
 }
 
+message UserInfo {
+  User user = 1;
+}
+
 message ConnectionMessage {
   User user = 1;
 }
 
 service ChatService {
+  rpc GetUsername(google.protobuf.Empty) returns (UserInfo);
   rpc SendMessage(ContentMessage) returns (AckMessage);
   rpc RequestConnection(ConnectionMessage) returns (AckMessage);
+  rpc Disconnect(ConnectionMessage) returns (AckMessage);
 }

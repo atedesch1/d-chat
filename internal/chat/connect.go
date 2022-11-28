@@ -10,7 +10,7 @@ import (
 	"github.com/decentralized-chat/pkg/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (c *Client) RegisterServer() {
@@ -33,48 +33,66 @@ func (c *Client) ListenForConnections() {
 	}
 }
 
-func (c *Client) RequestConnection(ctx context.Context, msg *chat_message.ConnectionMessage) (*chat_message.AckMessage, error) {
-	return &chat_message.AckMessage{
-		From:   &c.User,
-		SentAt: timestamppb.Now(),
-	}, c.DialUser(msg.User)
-}
-
-func (c *Client) DialUser(user *chat_message.User) error {
-	isAlreadyConnected := false
+func (c *Client) DialAddress(addr *chat_message.Address) error {
 	for _, peer := range c.peers {
-		if peer.user.Addr.Ip == user.Addr.Ip &&
-			peer.user.Addr.Port == user.Addr.Port {
-			isAlreadyConnected = true
-			break
+		if peer.user.Addr.Ip == addr.Ip && peer.user.Addr.Port == addr.Port {
+			return errors.New("user already connected")
 		}
 	}
 
-	if isAlreadyConnected {
-		return errors.New("user already connected")
-	}
-
 	conn, err := grpc.Dial(
-		util.JoinIpAndPort(user.Addr.Ip, int(user.Addr.Port)),
+		util.JoinIpAndPort(addr.Ip, int(addr.Port)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		return err
 	}
 
-	c.peersMutex.Lock()
-	c.peers = append(c.peers, Peer{
-		user:   user,
-		conn:   conn,
-		client: chat_message.NewChatServiceClient(conn),
+	client := chat_message.NewChatServiceClient(conn)
+
+	userInfo, err := client.GetUsername(context.Background(), &emptypb.Empty{})
+
+	if err != nil {
+		return err
+	}
+
+	c.AddPeer(userInfo.User, conn)
+
+	_, err = client.RequestConnection(context.Background(), &chat_message.ConnectionMessage{
+		User: &c.User,
 	})
-	c.peersMutex.Unlock()
+
+	return err
+}
+
+func (c *Client) RequestMatchConnection(username string) error {
+	peer, ok := c.peers[username]
+
+	if !ok {
+		return errors.New("peer not connected")
+	}
+
+	if _, err := peer.client.RequestConnection(context.Background(), &chat_message.ConnectionMessage{
+		User: &c.User,
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (c *Client) DialChannel(channel Channel) {
-	for _, user := range channel.users {
-		go c.DialUser(user)
+func (c *Client) CloseConnection(username string) error {
+	peer, ok := c.peers[username]
+	if !ok {
+		return errors.New("peer not connected")
 	}
+
+	if _, err := peer.client.Disconnect(context.Background(), &chat_message.ConnectionMessage{
+		User: &c.User,
+	}); err != nil {
+		return err
+	}
+
+	peer.conn.Close()
+	return c.RemovePeer(username)
 }

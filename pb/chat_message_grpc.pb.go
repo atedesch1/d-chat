@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,8 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatServiceClient interface {
+	GetUsername(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserInfo, error)
 	SendMessage(ctx context.Context, in *ContentMessage, opts ...grpc.CallOption) (*AckMessage, error)
 	RequestConnection(ctx context.Context, in *ConnectionMessage, opts ...grpc.CallOption) (*AckMessage, error)
+	Disconnect(ctx context.Context, in *ConnectionMessage, opts ...grpc.CallOption) (*AckMessage, error)
 }
 
 type chatServiceClient struct {
@@ -32,6 +35,15 @@ type chatServiceClient struct {
 
 func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
 	return &chatServiceClient{cc}
+}
+
+func (c *chatServiceClient) GetUsername(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserInfo, error) {
+	out := new(UserInfo)
+	err := c.cc.Invoke(ctx, "/chat_message.ChatService/GetUsername", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *chatServiceClient) SendMessage(ctx context.Context, in *ContentMessage, opts ...grpc.CallOption) (*AckMessage, error) {
@@ -52,12 +64,23 @@ func (c *chatServiceClient) RequestConnection(ctx context.Context, in *Connectio
 	return out, nil
 }
 
+func (c *chatServiceClient) Disconnect(ctx context.Context, in *ConnectionMessage, opts ...grpc.CallOption) (*AckMessage, error) {
+	out := new(AckMessage)
+	err := c.cc.Invoke(ctx, "/chat_message.ChatService/Disconnect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility
 type ChatServiceServer interface {
+	GetUsername(context.Context, *emptypb.Empty) (*UserInfo, error)
 	SendMessage(context.Context, *ContentMessage) (*AckMessage, error)
 	RequestConnection(context.Context, *ConnectionMessage) (*AckMessage, error)
+	Disconnect(context.Context, *ConnectionMessage) (*AckMessage, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -65,11 +88,17 @@ type ChatServiceServer interface {
 type UnimplementedChatServiceServer struct {
 }
 
+func (UnimplementedChatServiceServer) GetUsername(context.Context, *emptypb.Empty) (*UserInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsername not implemented")
+}
 func (UnimplementedChatServiceServer) SendMessage(context.Context, *ContentMessage) (*AckMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedChatServiceServer) RequestConnection(context.Context, *ConnectionMessage) (*AckMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestConnection not implemented")
+}
+func (UnimplementedChatServiceServer) Disconnect(context.Context, *ConnectionMessage) (*AckMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Disconnect not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 
@@ -82,6 +111,24 @@ type UnsafeChatServiceServer interface {
 
 func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
 	s.RegisterService(&ChatService_ServiceDesc, srv)
+}
+
+func _ChatService_GetUsername_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).GetUsername(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/chat_message.ChatService/GetUsername",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).GetUsername(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatService_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -120,6 +167,24 @@ func _ChatService_RequestConnection_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatService_Disconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectionMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).Disconnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/chat_message.ChatService/Disconnect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).Disconnect(ctx, req.(*ConnectionMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -128,12 +193,20 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ChatServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetUsername",
+			Handler:    _ChatService_GetUsername_Handler,
+		},
+		{
 			MethodName: "SendMessage",
 			Handler:    _ChatService_SendMessage_Handler,
 		},
 		{
 			MethodName: "RequestConnection",
 			Handler:    _ChatService_RequestConnection_Handler,
+		},
+		{
+			MethodName: "Disconnect",
+			Handler:    _ChatService_Disconnect_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
