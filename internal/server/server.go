@@ -35,7 +35,7 @@ type ChannelInfo struct {
 	users       []string
 }
 
-func (ci *ChannelInfo) Init(channelname string, users []string) struct {
+func (ci *ChannelInfo) Init(channelname string, users []string) {
 	ci.channelname = channelname
 	ci.users = users
 }
@@ -77,7 +77,7 @@ func (s *Server) RegisterUser(user string, ipv4 string, port string, publicKey s
 	return err
 }
 
-func (s *Server) SetUserOnline(user string) (string, error) error {
+func (s *Server) SetUserOnline(user string) error {
 	userId, err := GetUserIdFromUsername(user)
 	if err != nil {
 		log.Fatal(err)
@@ -95,7 +95,7 @@ func (s *Server) SetUserOnline(user string) (string, error) error {
 
 func (s *Server) IsUserRegistered(user string) bool {
 	userId, err := GetUserIdFromUsername(user)
-	err != nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 	userExists := zookeeper.CheckZNode(s.conn, fmt.Sprintf("%s/id%d", usersPath, userId))
@@ -112,7 +112,7 @@ func (s *Server) IsUserInsideChannel(channelname string, user string) bool {
 	return false
 }
 
-func (s *Server) IsUserOnline(user string) bool, error {
+func (s *Server) IsUserOnline(user string) (bool, error) {
 	userExists := IsUserRegistered(user)
 	if userExists == false {
 		return false, error.New("user was not registered")
