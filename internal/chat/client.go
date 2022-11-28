@@ -2,16 +2,17 @@ package chat
 
 import (
 	"bufio"
-	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"time"
+	"strconv"
+	"strings"
+	"sync"
 
 	chat_message "github.com/decentralized-chat/pb"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Client struct {
@@ -22,7 +23,8 @@ type Client struct {
 	lis net.Listener
 	srv *grpc.Server
 
-	peers []Peer
+	peersMutex sync.Mutex
+	peers      map[string]Peer
 }
 
 func NewClient(username string, port uint) *Client {
@@ -34,35 +36,34 @@ func NewClient(username string, port uint) *Client {
 				Port: uint32(port),
 			},
 		},
+		peers: make(map[string]Peer),
 	}
 }
 
-func (c *Client) SendMessage(ctx context.Context, msg *chat_message.ContentMessage) (*chat_message.AckMessage, error) {
-	fmt.Println(msg.From.Username, ":", msg.Content)
-
-	return &chat_message.AckMessage{
-		From:   &c.User,
-		SentAt: timestamppb.Now(),
-	}, nil
+type Peer struct {
+	user   *chat_message.User
+	client chat_message.ChatServiceClient
+	conn   *grpc.ClientConn
 }
 
-func (c *Client) BroadcastMessage(content string) error {
-	msg := &chat_message.ContentMessage{
-		From:    &c.User,
-		Content: content,
-		SentAt:  timestamppb.Now(),
+func (c *Client) AddPeer(user *chat_message.User, conn *grpc.ClientConn) {
+	c.peersMutex.Lock()
+	c.peers[user.Username] = Peer{
+		user:   user,
+		conn:   conn,
+		client: chat_message.NewChatServiceClient(conn),
+	}
+	c.peersMutex.Unlock()
+}
+
+func (c *Client) RemovePeer(username string) error {
+	if _, ok := c.peers[username]; !ok {
+		return errors.New("couldnt find peer")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	for _, peer := range c.peers {
-		ack, err := peer.client.SendMessage(ctx, msg)
-		if err != nil {
-			return err
-		}
-		log.Println("Ack from", ack.From.Username)
-	}
+	c.peersMutex.Lock()
+	delete(c.peers, username)
+	c.peersMutex.Unlock()
 
 	return nil
 }
@@ -70,7 +71,6 @@ func (c *Client) BroadcastMessage(content string) error {
 func (c *Client) ListenForInput() {
 	inputChannel := make(chan string)
 
-	// Read input
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
@@ -83,6 +83,32 @@ func (c *Client) ListenForInput() {
 	}()
 
 	for input := range inputChannel {
-		go c.BroadcastMessage(input)
+		in := strings.Split(input, " ")
+		if len(in) < 2 {
+			fmt.Println("input: <command> <target>")
+			continue
+		}
+
+		command := in[0]
+		target := in[1]
+
+		if command == "send" {
+			go c.BroadcastMessage(target)
+		} else if command == "conn" {
+			port, err := strconv.Atoi(target)
+			if err != nil {
+				log.Println("couldnt convert porn")
+				continue
+			}
+
+			go c.DialAddress(&chat_message.Address{
+				Ip:   "localhost",
+				Port: uint32(port),
+			})
+		} else if command == "disc" {
+			if err := c.CloseConnection(target); err != nil {
+				fmt.Println(err)
+			}
+		}
 	}
 }
