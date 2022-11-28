@@ -6,6 +6,7 @@ import (
 	"github.com/decentralized-chat/pkg/zookeeper"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 var _ = Describe("Server", func() {
@@ -62,6 +63,28 @@ var _ = Describe("Server", func() {
 			server.RegisterChannel(channelName, userId)
 			status := server.DeleteChannel(channelName)
 			Expect(status).To(Equal(true))
+		})
+
+		It(`Should be able to insert new users in the channel`, func() {
+			channelName := "insertchannel"
+			server.RegisterChannel(channelName, userId)
+			var newUsersId []int
+			newUsersId = append(newUsersId, 90)
+			newUsersId = append(newUsersId, 40)
+			newUsersId = append(newUsersId, 50)
+			newUsersId = append(newUsersId, 60)
+			statusAdd := server.AddUsersToChannel(channelName, newUsersId)
+			expectedUsersId := [5]int{userId, 90, 40, 50, 60}
+			channelUsersId := server.GetChannelUsers(channelName)
+			fmt.Print(channelUsersId)
+			fmt.Print(expectedUsersId)
+			for index, _ := range channelUsersId {
+				Expect(channelUsersId[index]).To(Equal(expectedUsersId[index]))
+			}
+			time.Sleep(20 * time.Second)
+			Expect(statusAdd).To(Equal(true))
+			statusDelete := server.DeleteChannel(channelName)
+			Expect(statusDelete).To(Equal(true))
 		})
 	})
 
