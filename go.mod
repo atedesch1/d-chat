@@ -11,7 +11,13 @@ require (
 )
 
 require (
+	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/charmbracelet/lipgloss v0.5.0 // indirect
+)
+
+require (
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
+	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.23.1 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect

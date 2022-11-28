@@ -51,7 +51,11 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
 		}
+
+	case EnteredValidUsernameMsg:
+		m.currentView = channelsView
 	}
+
 	m.models[m.currentView], cmd = m.getCurrentModel().Update(msg)
 	return m, cmd
 }
