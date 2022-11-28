@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
 
 	chat_message "github.com/decentralized-chat/pb"
 	"google.golang.org/grpc"
@@ -18,7 +19,14 @@ type Client struct {
 	lis net.Listener
 	srv *grpc.Server
 
-	peers []Peer
+	peersMutex sync.Mutex
+	peers      []Peer
+}
+
+type Peer struct {
+	user   *chat_message.User
+	client chat_message.ChatServiceClient
+	conn   *grpc.ClientConn
 }
 
 func NewClient(username string, port uint) *Client {

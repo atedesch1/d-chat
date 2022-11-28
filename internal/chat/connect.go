@@ -17,15 +17,18 @@ import (
 func (c *Client) RegisterServer() {
 	var err error
 	c.lis, err = net.Listen("tcp", fmt.Sprintf(":%d", c.User.Addr.Port))
+
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	c.srv = grpc.NewServer()
 	chat_message.RegisterChatServiceServer(c.srv, c)
 }
 
 func (c *Client) ListenForConnections() {
 	log.Printf("listening on %v", c.lis.Addr())
+
 	if err := c.srv.Serve(c.lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
@@ -34,7 +37,8 @@ func (c *Client) ListenForConnections() {
 func (c *Client) RequestConnection(ctx context.Context, msg *chat_message.ConnectionMessage) (*chat_message.AckMessage, error) {
 	isAlreadyConnected := false
 	for _, peer := range c.peers {
-		if peer.user.Addr.Ip == msg.ConnectTo.Addr.Ip && peer.user.Addr.Port == msg.ConnectTo.Addr.Port {
+		if peer.user.Addr.Ip == msg.ConnectTo.Addr.Ip &&
+			peer.user.Addr.Port == msg.ConnectTo.Addr.Port {
 			isAlreadyConnected = true
 			break
 		}
@@ -64,17 +68,19 @@ func (c *Client) DialUser(user *chat_message.User) error {
 		return err
 	}
 
+	c.peersMutex.Lock()
 	c.peers = append(c.peers, Peer{
 		user:   user,
 		conn:   conn,
 		client: chat_message.NewChatServiceClient(conn),
 	})
+	c.peersMutex.Unlock()
 
 	return nil
 }
 
 func (c *Client) DialChannel(channel Channel) {
 	for _, user := range channel.users {
-		c.DialUser(user)
+		go c.DialUser(user)
 	}
 }
