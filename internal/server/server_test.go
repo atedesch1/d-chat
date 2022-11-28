@@ -6,7 +6,6 @@ import (
 	"github.com/decentralized-chat/pkg/zookeeper"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 var _ = Describe("Server", func() {
@@ -81,7 +80,6 @@ var _ = Describe("Server", func() {
 			for index, _ := range channelUsersId {
 				Expect(channelUsersId[index]).To(Equal(expectedUsersId[index]))
 			}
-			time.Sleep(20 * time.Second)
 			Expect(statusAdd).To(Equal(true))
 			statusDelete := server.DeleteChannel(channelName)
 			Expect(statusDelete).To(Equal(true))
