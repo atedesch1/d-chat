@@ -3,12 +3,11 @@ package chat
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net"
-	"strconv"
 
 	chat_message "github.com/decentralized-chat/pb"
+	"github.com/decentralized-chat/pkg/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -16,7 +15,7 @@ import (
 
 func (c *Client) RegisterServer() {
 	var err error
-	c.lis, err = net.Listen("tcp", fmt.Sprintf(":%d", c.User.Addr.Port))
+	c.lis, err = net.Listen("tcp", util.JoinIpAndPort(c.User.Addr.Ip, int(c.User.Addr.Port)))
 
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -35,33 +34,28 @@ func (c *Client) ListenForConnections() {
 }
 
 func (c *Client) RequestConnection(ctx context.Context, msg *chat_message.ConnectionMessage) (*chat_message.AckMessage, error) {
+	return &chat_message.AckMessage{
+		From:   &c.User,
+		SentAt: timestamppb.Now(),
+	}, c.DialUser(msg.ConnectTo)
+}
+
+func (c *Client) DialUser(user *chat_message.User) error {
 	isAlreadyConnected := false
 	for _, peer := range c.peers {
-		if peer.user.Addr.Ip == msg.ConnectTo.Addr.Ip &&
-			peer.user.Addr.Port == msg.ConnectTo.Addr.Port {
+		if peer.user.Addr.Ip == user.Addr.Ip &&
+			peer.user.Addr.Port == user.Addr.Port {
 			isAlreadyConnected = true
 			break
 		}
 	}
 
-	var err error
-
-	if !isAlreadyConnected {
-		c.DialUser(msg.ConnectTo)
-	} else {
-		log.Println("is already connected")
-		err = errors.New("client is already connected")
+	if isAlreadyConnected {
+		return errors.New("user already connected")
 	}
 
-	return &chat_message.AckMessage{
-		From:   &c.User,
-		SentAt: timestamppb.Now(),
-	}, err
-}
-
-func (c *Client) DialUser(user *chat_message.User) error {
 	conn, err := grpc.Dial(
-		"localhost:"+strconv.Itoa(int(user.Addr.Port)),
+		util.JoinIpAndPort(user.Addr.Ip, int(user.Addr.Port)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
