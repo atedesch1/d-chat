@@ -37,7 +37,7 @@ func (c *Client) RequestConnection(ctx context.Context, msg *chat_message.Connec
 	return &chat_message.AckMessage{
 		From:   &c.User,
 		SentAt: timestamppb.Now(),
-	}, c.DialUser(msg.ConnectTo)
+	}, c.DialUser(msg.User)
 }
 
 func (c *Client) DialUser(user *chat_message.User) error {
