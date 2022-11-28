@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 option go_package = "github.com/decentralized-chat/chat_message";
 package chat_message;
@@ -15,7 +14,6 @@ message User {
   Address addr = 2;
 }
 
-
 message ContentMessage {
   User from = 1;
   google.protobuf.Timestamp sent_at = 2;
@@ -27,6 +25,11 @@ message AckMessage {
   google.protobuf.Timestamp sent_at = 2;
 }
 
+message ConnectionMessage {
+  User connect_to = 1;
+}
+
 service ChatService {
   rpc SendMessage(ContentMessage) returns (AckMessage);
+  rpc RequestConnection(ConnectionMessage) returns (AckMessage);
 }
