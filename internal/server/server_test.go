@@ -1,11 +1,9 @@
 package server
 
 import (
-	"github.com/decentralized-chat/pkg/zookeeper"
-	"github.com/go-zookeeper/zk"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
+	"github.com/decentralized-chat/pkg/zookeeper"
 	"fmt"
 	"strconv"
 )
@@ -16,18 +14,17 @@ var _ = Describe("Server", func() {
 	When("A new user open the client", func() {
 		It(`Should be able to register its 
 		    information in the raw ZooKeeper server`, func() {
-			local := "127.0.0.1"
-			conn, _, err := zk.Connect([]string{local}, time.Second)
-			Expect(err).To(BeNil())
+			server := new(Server)
+			server.Init("127.0.0.1:2181")
 
 			username := "username"
 			ipv4 := "192.168.0.10"
 			publicKey := "i1RfARNCYn9+K3xmRNTaXG9sVSK6TMgY9l8SDm3MUZ4="
-			path, err := RegisterUser(conn, username, ipv4, publicKey)
-			usersData, _ := zookeeper.GetZNode(conn, usersPath)
+			path, err := server.RegisterUser(username, ipv4, publicKey)
+			usersData, _ := zookeeper.GetZNode(server.conn, usersPath)
 			clientId, _ = strconv.Atoi(usersData)
 			expectedPath := fmt.Sprintf("%s/id%s", usersPath, usersData)
-			currentConnPath, connErr := SetUserOnline(conn, clientId)
+			currentConnPath, connErr := server.SetUserOnline(clientId)
 			expectedConnPath := fmt.Sprintf("%s/id%d", connPath, clientId)
 			Expect(err).To(BeNil())
 			Expect(connErr).To(BeNil())

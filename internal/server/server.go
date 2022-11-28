@@ -9,6 +9,7 @@ import (
 	"os"
 	"bufio"
 	"path/filepath"
+	"time"
 )
 
 const (
@@ -17,33 +18,45 @@ const (
 	configFilePath = "../server/id.txt"
 )
 
-func RegisterUser(conn *zk.Conn, name string, ipv4 string, publicKey string) (string, error) {
-	usersExists := zookeeper.CheckZNode(conn, usersPath)
+type Server struct {
+	conn *zk.Conn
+}
+
+func (s *Server) Init(serverAddress string) {
+	conn, _, err := zk.Connect([]string{serverAddress}, time.Second)
+	s.conn = conn
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (s *Server) RegisterUser(name string, ipv4 string, publicKey string) (string, error) {
+	usersExists := zookeeper.CheckZNode(s.conn, usersPath)
 	if usersExists == false {
 		log.Fatalf("You must set %s path in the ZooKeeper.", usersPath)
 	}
 
-	numberOfUsersString, version := zookeeper.GetZNode(conn, usersPath)
+	numberOfUsersString, version := zookeeper.GetZNode(s.conn, usersPath)
 	numberOfUsersUpdated, _ := strconv.Atoi(numberOfUsersString)
 	numberOfUsersUpdated++
-	zookeeper.SetZNode(conn, usersPath, strconv.Itoa(numberOfUsersUpdated), version)
+	zookeeper.SetZNode(s.conn, usersPath, strconv.Itoa(numberOfUsersUpdated), version)
 
 	userPath := fmt.Sprintf("%s/id%d", usersPath, numberOfUsersUpdated)
 	userData := fmt.Sprintf("name %s\nipv4 %s\npublic-key %s", name, ipv4, publicKey)
 	flagPermanent := int32(0)
-	ZNodePath, err := zookeeper.CreateZNode(conn, userPath, flagPermanent, userData)
+	ZNodePath, err := zookeeper.CreateZNode(s.conn, userPath, flagPermanent, userData)
 	CreateIdLocal(numberOfUsersUpdated)
 	return ZNodePath, err
 }
 
-func SetUserOnline(conn *zk.Conn, userNumber int) (string, error) {
-	connExists := zookeeper.CheckZNode(conn, connPath)
+func (s *Server) SetUserOnline(userNumber int) (string, error) {
+	connExists := zookeeper.CheckZNode(s.conn, connPath)
 	if connExists == false {
 		log.Fatalf("You must set %s path in the ZooKeeper.", connPath)
 	}
 
 	userConnPath := fmt.Sprintf("%s/id%d", connPath, userNumber)
-	ZNodeConnPath, err := zookeeper.CreateZNode(conn, userConnPath, zk.FlagEphemeral, "")
+	ZNodeConnPath, err := zookeeper.CreateZNode(s.conn, userConnPath, zk.FlagEphemeral, "")
 	return ZNodeConnPath, err
 }
 
