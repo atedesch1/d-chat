@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"time"
@@ -46,6 +45,19 @@ func (c *Client) SendMessage(ctx context.Context, msg *chat_message.ContentMessa
 	}, nil
 }
 
+func (c *Client) MessagePeer(msg *chat_message.ContentMessage, peer Peer) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err := peer.client.SendMessage(ctx, msg)
+	if err != nil {
+		return err
+	}
+	// log.Println("Ack from", ack.From.Username)
+
+	return nil
+}
+
 func (c *Client) BroadcastMessage(content string) error {
 	msg := &chat_message.ContentMessage{
 		From:    &c.User,
@@ -53,15 +65,8 @@ func (c *Client) BroadcastMessage(content string) error {
 		SentAt:  timestamppb.Now(),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
 	for _, peer := range c.peers {
-		ack, err := peer.client.SendMessage(ctx, msg)
-		if err != nil {
-			return err
-		}
-		log.Println("Ack from", ack.From.Username)
+		go c.MessagePeer(msg, peer)
 	}
 
 	return nil
