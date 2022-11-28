@@ -3,6 +3,9 @@ all: client
 client: cmd/client/main.go
 	go build -o bin/client cmd/client/*
 
+zookeeper:
+	docker-compose up
+
 protogen:
 	protoc --go_out=pb --go_opt=paths=source_relative \
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \

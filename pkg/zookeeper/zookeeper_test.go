@@ -1,6 +1,6 @@
 package zookeeper
 
-import(
+import (
 	"github.com/go-zookeeper/zk"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,14 +19,14 @@ var _ = Describe("ZooKeeper", func() {
 			zkPath := "/zkPath"
 			zkFlags := int32(zk.FlagEphemeral)
 			data := "zkPathData"
-			registeredPath, err := registerUser(conn, zkPath, zkFlags, data)
+			registeredPath, err := CreateZNode(conn, zkPath, zkFlags, data)
 			Expect(err).To(BeNil())
 			Expect(registeredPath).To(Equal(zkPath))
 
-			exists := checkZNode(conn, zkPath)
+			exists := CheckZNode(conn, zkPath)
 			Expect(exists).To(Equal(true))
 
-			retrievedData, _ := getZNode(conn, zkPath)
+			retrievedData, _ := GetZNode(conn, zkPath)
 			Expect(retrievedData).To(Equal(data))
 		})
 
@@ -40,7 +40,7 @@ var _ = Describe("ZooKeeper", func() {
 			zkPath := "/zkPersistent"
 			zkFlags := int32(0)
 			data := "zkPersistentData"
-			registeredPath, err := registerUser(conn, zkPath, zkFlags, data)
+			registeredPath, err := CreateZNode(conn, zkPath, zkFlags, data)
 			Expect(err).To(BeNil())
 			Expect(registeredPath).To(Equal(zkPath))
 		})
@@ -53,10 +53,10 @@ var _ = Describe("ZooKeeper", func() {
 
 			zkPath := "/zkPersistent"
 			data := "zkPersistentData"
-			exists := checkZNode(conn, zkPath)
+			exists := CheckZNode(conn, zkPath)
 			Expect(exists).To(Equal(true))
 
-			retrievedData, _ := getZNode(conn, zkPath)
+			retrievedData, _ := GetZNode(conn, zkPath)
 			Expect(retrievedData).To(Equal(data))
 		})
 	})
