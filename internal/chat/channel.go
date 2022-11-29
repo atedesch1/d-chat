@@ -32,7 +32,7 @@ func (c *Client) CreateChannel(name string) error {
 }
 
 func (c *Client) RetrieveLostMessages() {
-	messages, _ := c.zk.GetMessageFromQueue(c.User.Username)
+	messages, _ := c.zk.GetMessageFromQueue(c.User.Username, c.channel)
 
 	for _, message := range messages {
 		fmt.Printf("%s: %s\n", message.From, message.Content)
@@ -47,8 +47,8 @@ func (c *Client) JoinChannel(name string) {
 			go c.DialAddress(user.Addr)
 		}
 	}
-	c.RetrieveLostMessages()
 	c.channel = name
+	c.RetrieveLostMessages()
 }
 
 func (c *Client) GetChannelUsers(name string) ([]*chat_message.User, error) {
