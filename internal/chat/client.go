@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/decentralized-chat/internal/server"
 	chat_message "github.com/decentralized-chat/pb"
 	"google.golang.org/grpc"
 )
@@ -25,19 +24,25 @@ type Client struct {
 
 	peersMutex sync.Mutex
 	peers      map[string]Peer
+
+	zk *server.Server
 }
 
-func NewClient(username string, port uint) *Client {
+func NewClient(username string, ip string, port uint) *Client {
 	return &Client{
 		User: chat_message.User{
 			Username: username,
 			Addr: &chat_message.Address{
-				Ip:   "localhost",
+				Ip:   ip,
 				Port: uint32(port),
 			},
 		},
 		peers: make(map[string]Peer),
 	}
+}
+
+func (c *Client) ConnectZk(zk *server.Server) {
+	c.zk = zk
 }
 
 type Peer struct {
@@ -94,20 +99,29 @@ func (c *Client) ListenForInput() {
 
 		if command == "send" {
 			go c.BroadcastMessage(target)
+		} else if command == "create" {
+			c.CreateChannel(target)
+		} else if command == "getchans" {
+			fmt.Println(c.ListChannels())
+		} else if command == "join" {
+			c.JoinChannel(target)
 		} else if command == "conn" {
-			port, err := strconv.Atoi(target)
-			if err != nil {
-				log.Println("couldnt convert porn")
-				continue
+			users, _ := c.GetChannelUsers(target)
+			for _, user := range users {
+				if user.Username != c.User.Username {
+					go c.DialAddress(user.Addr)
+				}
+			}
+		} else if command == "sign" && target == "out" {
+			usernames := make([]string, 0)
+			for _, peer := range c.peers {
+				usernames = append(usernames, peer.user.Username)
 			}
 
-			go c.DialAddress(&chat_message.Address{
-				Ip:   "localhost",
-				Port: uint32(port),
-			})
-		} else if command == "disc" {
-			if err := c.CloseConnection(target); err != nil {
-				fmt.Println(err)
+			for _, username := range usernames {
+				if err := c.CloseConnection(username); err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	}
