@@ -26,7 +26,7 @@ func (c *Client) RegisterServer() {
 }
 
 func (c *Client) ListenForConnections() {
-	log.Printf("listening on %v", c.lis.Addr())
+	// log.Printf("listening on %v", c.lis.Addr())
 
 	if err := c.srv.Serve(c.lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
