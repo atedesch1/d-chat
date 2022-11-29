@@ -326,20 +326,26 @@ func (s *Server) SendMessageToQueue(channelname string, to string, from string, 
 	return nil
 }
 
-func (s *Server) GetMessageFromQueue(user string) ([]*QueueMessage, error) {
+func (s *Server) GetMessageFromQueue(user string, channelname string) ([]*QueueMessage, error) {
 	userId, err := s.GetUserIdFromUsername(user)
 	if err != nil {
 		log.Fatal(err)
 	}
-	data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/id%d/queue", usersPath, userId))
+	data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/id%d/queue", usersPath, userId))
 	if data != "" {
 		lines := strings.Split(data, "\n")
 		if len(lines) > 0 {
 			lines = lines[:len(lines)-1]
 		}
+		newData := ""
 		var queue []*QueueMessage
 		for i := 0; i < len(lines); i++ {
 			elements := strings.Split(lines[i], " ")
+			if elements[0] != channelname {
+				newData += fmt.Sprintf("%s\n", lines[i])
+				continue
+			}
+
 			message := new(QueueMessage)
 			message.Channelname = elements[0]
 			message.From = elements[1]
@@ -350,6 +356,10 @@ func (s *Server) GetMessageFromQueue(user string) ([]*QueueMessage, error) {
 				}
 			}
 			queue = append(queue, message)
+		}
+		zookeeper.SetZNode(s.conn, fmt.Sprintf("%s/id%d/queue", usersPath, userId), newData, version)
+		if newData == data {
+			return []*QueueMessage{}, errors.New("no unseen messages")
 		}
 		return queue, nil
 	}
