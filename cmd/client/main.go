@@ -4,7 +4,6 @@ import (
 	"flag"
 
 	"github.com/decentralized-chat/internal/chat"
-	"github.com/decentralized-chat/internal/server"
 )
 
 var (
@@ -18,10 +17,6 @@ func main() {
 
 	c := chat.NewClient(*username, ip, *port)
 
-	zk := new(server.Server)
-	zk.Init(ip, "2181")
-
-	c.ConnectZk(zk)
 	c.RegisterUser()
 
 	c.RegisterServer()

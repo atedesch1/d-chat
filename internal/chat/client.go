@@ -29,6 +29,9 @@ type Client struct {
 }
 
 func NewClient(username string, ip string, port uint) *Client {
+	zk := new(server.Server)
+	zk.Init(ip, "2181")
+
 	return &Client{
 		User: chat_message.User{
 			Username: username,
@@ -38,11 +41,8 @@ func NewClient(username string, ip string, port uint) *Client {
 			},
 		},
 		peers: make(map[string]Peer),
+		zk:    zk,
 	}
-}
-
-func (c *Client) ConnectZk(zk *server.Server) {
-	c.zk = zk
 }
 
 type Peer struct {
@@ -88,41 +88,24 @@ func (c *Client) ListenForInput() {
 	}()
 
 	for input := range inputChannel {
-		in := strings.Split(input, " ")
-		if len(in) < 2 {
-			fmt.Println("input: <command> <target>")
-			continue
-		}
 
-		command := in[0]
-		target := in[1]
+		if strings.HasPrefix(input, "$") {
+			_, in, _ := strings.Cut(input, "$")
+			command, params, _ := strings.Cut(in, " ")
 
-		if command == "send" {
-			go c.BroadcastMessage(target)
-		} else if command == "create" {
-			c.CreateChannel(target)
-		} else if command == "getchans" {
-			fmt.Println(c.ListChannels())
-		} else if command == "join" {
-			c.JoinChannel(target)
-		} else if command == "conn" {
-			users, _ := c.GetChannelUsers(target)
-			for _, user := range users {
-				if user.Username != c.User.Username {
-					go c.DialAddress(user.Addr)
-				}
-			}
-		} else if command == "sign" && target == "out" {
-			usernames := make([]string, 0)
-			for _, peer := range c.peers {
-				usernames = append(usernames, peer.user.Username)
+			switch command {
+			case "create":
+				c.CreateChannel(params)
+			case "list":
+				fmt.Println("Channels:", c.ListChannels())
+			case "join":
+				c.JoinChannel(params)
+			case "leave":
+				c.DisconnectFromChannel()
 			}
 
-			for _, username := range usernames {
-				if err := c.CloseConnection(username); err != nil {
-					fmt.Println(err)
-				}
-			}
+		} else {
+			go c.BroadcastMessage(input)
 		}
 	}
 }

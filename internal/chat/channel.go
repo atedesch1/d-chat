@@ -2,6 +2,7 @@ package chat
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	chat_message "github.com/decentralized-chat/pb"
@@ -30,8 +31,14 @@ func (c *Client) CreateChannel(name string) error {
 	return c.zk.RegisterChannel(name, c.User.Username)
 }
 
-func (c *Client) JoinChannel(name string) error {
-	return c.zk.AddUserToChannel(name, c.User.Username)
+func (c *Client) JoinChannel(name string) {
+	c.zk.AddUserToChannel(name, c.User.Username)
+	users, _ := c.GetChannelUsers(name)
+	for _, user := range users {
+		if user.Username != c.User.Username {
+			go c.DialAddress(user.Addr)
+		}
+	}
 }
 
 func (c *Client) GetChannelUsers(name string) ([]*chat_message.User, error) {
@@ -58,6 +65,19 @@ func (c *Client) GetChannelUsers(name string) ([]*chat_message.User, error) {
 	}
 
 	return users, nil
+}
+
+func (c *Client) DisconnectFromChannel() {
+	usernames := make([]string, 0)
+	for _, peer := range c.peers {
+		usernames = append(usernames, peer.user.Username)
+	}
+
+	for _, username := range usernames {
+		if err := c.CloseConnection(username); err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
 func (c *Client) LeaveChannel(name string) {
