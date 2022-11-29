@@ -35,8 +35,9 @@ type ChannelInfo struct {
 }
 
 type QueueMessage struct {
-	from    string
-	content string
+	channelname string
+	from        string
+	content     string
 }
 
 func (ci *ChannelInfo) Init(channelname string, users []string) {
@@ -313,14 +314,14 @@ func (s *Server) GetUserData(user string) (*UserInfo, error) {
 	return ui, nil
 }
 
-func (s *Server) SendMessageToQueue(to string, from string, message string) error {
+func (s *Server) SendMessageToQueue(channelname string, to string, from string, message string) error {
 	userId, err := s.GetUserIdFromUsername(to)
 	if err != nil {
 		log.Fatal(err)
 	}
 	path := fmt.Sprintf("%s/id%d/queue", usersPath, userId)
 	data, version := zookeeper.GetZNode(s.conn, path)
-	data += fmt.Sprintf("%s %s\n", from, message)
+	data += fmt.Sprintf("%s %s %s\n", channelname, from, message)
 	zookeeper.SetZNode(s.conn, path, data, version)
 	return nil
 }
@@ -340,10 +341,11 @@ func (s *Server) GetMessageFromQueue(user string) ([]*QueueMessage, error) {
 		for i := 0; i < len(lines); i++ {
 			elements := strings.Split(lines[i], " ")
 			message := new(QueueMessage)
-			message.from = elements[0]
-			message.content = elements[1]
-			if len(elements) >= 2 {
-				for i := 2; i < len(elements); i++ {
+			message.channelname = elements[0]
+			message.from = elements[1]
+			message.content = elements[2]
+			if len(elements) > 3 {
+				for i := 3; i < len(elements); i++ {
 					message.content += fmt.Sprintf(" %s", elements[i])
 				}
 			}
