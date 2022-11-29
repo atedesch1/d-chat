@@ -104,6 +104,15 @@ var _ = Describe("Server", func() {
 			expectedUsers2 = append(expectedUsers2, username, user2)
 			users2 := s.GetChannelUsers(channelname)
 			Expect(users2).To(Equal(expectedUsers2))
+			err = s.SendMessageToQueue(username, user2, "message")
+			Expect(err).To(BeNil())
+			err = s.SendMessageToQueue(username, user2, "message message message")
+			queue, queueErr := s.GetMessageFromQueue(username)
+			Expect(queueErr).To(BeNil())
+			Expect(queue[0].from).To(Equal(user2))
+			Expect(queue[0].content).To(Equal("message"))
+			Expect(queue[1].from).To(Equal(user2))
+			Expect(queue[1].content).To(Equal("message message message"))
 		})
 
 		It("Should be able to delete a channel", func() {

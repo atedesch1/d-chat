@@ -34,6 +34,11 @@ type ChannelInfo struct {
 	users       []string
 }
 
+type QueueMessage struct {
+	from    string
+	content string
+}
+
 func (ci *ChannelInfo) Init(channelname string, users []string) {
 	ci.channelname = channelname
 	ci.users = users
@@ -107,9 +112,14 @@ func (s *Server) RegisterUser(user string, ipv4 string, port string, publicKey s
 	zookeeper.SetZNode(s.conn, usersPath, strconv.Itoa(numberOfUsersUpdated), version)
 
 	userPath := fmt.Sprintf("%s/id%d", usersPath, numberOfUsersUpdated)
+	userQueuePath := fmt.Sprintf("%s/id%d/queue", usersPath, numberOfUsersUpdated)
 	userData := fmt.Sprintf("username %s\nipv4 %s\nport %s\npublic-key %s", user, ipv4, port, publicKey)
 	flagPermanent := int32(0)
 	_, err := zookeeper.CreateZNode(s.conn, userPath, flagPermanent, userData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = zookeeper.CreateZNode(s.conn, userQueuePath, flagPermanent, "")
 	return err
 }
 
@@ -301,4 +311,45 @@ func (s *Server) GetUserData(user string) (*UserInfo, error) {
 	data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/id%d", usersPath, id))
 	ui := ParseUserData(data)
 	return ui, nil
+}
+
+func (s *Server) SendMessageToQueue(to string, from string, message string) error {
+	userId, err := s.GetUserIdFromUsername(to)
+	if err != nil {
+		log.Fatal(err)
+	}
+	path := fmt.Sprintf("%s/id%d/queue", usersPath, userId)
+	data, version := zookeeper.GetZNode(s.conn, path)
+	data += fmt.Sprintf("%s %s\n", from, message)
+	zookeeper.SetZNode(s.conn, path, data, version)
+	return nil
+}
+
+func (s *Server) GetMessageFromQueue(user string) ([]*QueueMessage, error) {
+	userId, err := s.GetUserIdFromUsername(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+	data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/id%d/queue", usersPath, userId))
+	if data != "" {
+		lines := strings.Split(data, "\n")
+		if len(lines) > 0 {
+			lines = lines[:len(lines) - 1]
+		}
+		var queue[]*QueueMessage
+		for i := 0; i < len(lines); i++ {
+			elements := strings.Split(lines[i], " ")
+			message := new(QueueMessage)
+			message.from = elements[0]
+			message.content = elements[1]
+			if len(elements) >= 2 {
+				for i := 2; i < len(elements); i++ {
+					message.content += fmt.Sprintf(" %s", elements[i])
+				}
+			}
+			queue = append(queue, message)
+		}
+		return queue, nil
+	}
+	return []*QueueMessage{}, errors.New("no unseen messages")
 }
