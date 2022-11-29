@@ -1,19 +1,20 @@
 package server
 
 import (
+	"errors"
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/decentralized-chat/pkg/zookeeper"
 	"github.com/go-zookeeper/zk"
-	"strconv"
-	"log"
-	"fmt"
-	"time"
-	"strings"
-	"errors"
 )
 
 const (
-	usersPath = "/users"
-	connPath = "/conn"
+	usersPath    = "/users"
+	connPath     = "/conn"
 	channelsPath = "/channels"
 )
 
@@ -22,14 +23,14 @@ type Server struct {
 }
 
 type UserInfo struct {
-	username  string
-	ipv4 	  string
-	port 	  string
-	publicKey string
+	Username  string
+	Ipv4      string
+	Port      string
+	PublicKey string
 }
 
 type ChannelInfo struct {
-	channelname   string
+	channelname string
 	users       []string
 }
 
@@ -39,10 +40,10 @@ func (ci *ChannelInfo) Init(channelname string, users []string) {
 }
 
 func (ui *UserInfo) Init(username string, ipv4 string, port string, publicKey string) {
-	ui.username = username
-	ui.ipv4 = ipv4
-	ui.port = port
-	ui.publicKey = publicKey
+	ui.Username = username
+	ui.Ipv4 = ipv4
+	ui.Port = port
+	ui.PublicKey = publicKey
 }
 
 func (s *Server) Init(ipv4 string, port string) error {
@@ -85,7 +86,7 @@ func (s *Server) GetUserIdFromUsername(user string) (int, error) {
 	for _, userId := range children {
 		data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", usersPath, userId))
 		ui := ParseUserData(data)
-		if ui.username == user {
+		if ui.Username == user {
 			userIdConverted, _ := strconv.Atoi(userId[2:])
 			return userIdConverted, nil
 		}
@@ -237,7 +238,7 @@ func (s *Server) GetChannelsName() []string {
 	for _, channelId := range children {
 		data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId))
 		ci := ParseChannelData(data)
-		channels = append(channels, ci.channelname)		
+		channels = append(channels, ci.channelname)
 	}
 	return channels
 }
@@ -259,15 +260,15 @@ func (s *Server) DeleteChannel(channelname string) error {
 	return errors.New("cannot delete a channel that does not exist")
 }
 
-func (s *Server) DeleteUserFromChannel(channelname string, user string) error { 
+func (s *Server) DeleteUserFromChannel(channelname string, user string) error {
 	children, _, err := s.conn.Children(channelsPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, channelId := range children {
 		data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId))
-	 	ci := ParseChannelData(data)
-	 	if ci.channelname == channelname {
+		ci := ParseChannelData(data)
+		if ci.channelname == channelname {
 			newData := fmt.Sprintf("channelname %s\nusers", ci.channelname)
 			for _, currUser := range ci.users {
 				if currUser == user {

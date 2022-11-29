@@ -1,9 +1,10 @@
 package server
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"fmt"
 )
 
 var _ = Describe("Server", func() {
@@ -32,7 +33,7 @@ var _ = Describe("Server", func() {
 
 	When("We've got the channel name and the users", func() {
 		It("Should be able to transform to zk data", func() {
-			var users[]string
+			var users []string
 			users = append(users, username, user1, user2)
 			data := GenerateChannelData(channelname, users)
 			expectedData := fmt.Sprintf("channelname %s\nusers %s %s %s", channelname, username, user1, user2)
@@ -44,10 +45,10 @@ var _ = Describe("Server", func() {
 		It("Should be able to parse it", func() {
 			data := fmt.Sprintf("username %s\nipv4 %s\nport %s\npublic-key %s", username, ipv4, port, publicKey)
 			ui := ParseUserData(data)
-			Expect(ui.username).To(Equal(username))
-			Expect(ui.ipv4).To(Equal(ipv4))
-			Expect(ui.port).To(Equal(port))
-			Expect(ui.publicKey).To(Equal(publicKey))
+			Expect(ui.Username).To(Equal(username))
+			Expect(ui.Ipv4).To(Equal(ipv4))
+			Expect(ui.Port).To(Equal(port))
+			Expect(ui.PublicKey).To(Equal(publicKey))
 		})
 	})
 
@@ -66,10 +67,10 @@ var _ = Describe("Server", func() {
 			Expect(status).To(Equal(true))
 			ui, uiErr := s.GetUserData(username)
 			Expect(uiErr).To(BeNil())
-			Expect(ui.username).To(Equal(username))
-			Expect(ui.ipv4).To(Equal(ipv4))
-			Expect(ui.port).To(Equal(port))
-			Expect(ui.publicKey).To(Equal(publicKey))
+			Expect(ui.Username).To(Equal(username))
+			Expect(ui.Ipv4).To(Equal(ipv4))
+			Expect(ui.Port).To(Equal(port))
+			Expect(ui.PublicKey).To(Equal(publicKey))
 		})
 
 		It("Should be able to create a channel", func() {
@@ -83,7 +84,7 @@ var _ = Describe("Server", func() {
 				Expect(chann[idx]).To(Equal(expectedChann[idx]))
 			}
 		})
-		
+
 		It("Should be able to add users to a channel", func() {
 			err := s.AddUserToChannel(channelname, user1)
 			Expect(err).To(BeNil())
@@ -93,13 +94,13 @@ var _ = Describe("Server", func() {
 			Expect(err).To(BeNil())
 			status = s.IsUserInsideChannel(channelname, user2)
 			Expect(status).To(Equal(true))
-			var expectedUsers1[]string 
+			var expectedUsers1 []string
 			expectedUsers1 = append(expectedUsers1, username, user1, user2)
 			users1 := s.GetChannelUsers(channelname)
 			Expect(users1).To(Equal(expectedUsers1))
 			err = s.DeleteUserFromChannel(channelname, user1)
 			Expect(err).To(BeNil())
-			var expectedUsers2[]string
+			var expectedUsers2 []string
 			expectedUsers2 = append(expectedUsers2, username, user2)
 			users2 := s.GetChannelUsers(channelname)
 			Expect(users2).To(Equal(expectedUsers2))
