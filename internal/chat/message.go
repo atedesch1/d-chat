@@ -14,6 +14,7 @@ func (c *Client) MessagePeer(msg *chat_message.ContentMessage, peer Peer) error 
 
 	_, err := peer.client.SendMessage(ctx, msg)
 	if err != nil {
+		c.zk.SendMessageToQueue(c.channel, peer.user.Username, c.User.Username, msg.Content)
 		return err
 	}
 

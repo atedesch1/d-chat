@@ -35,9 +35,9 @@ type ChannelInfo struct {
 }
 
 type QueueMessage struct {
-	channelname string
-	from        string
-	content     string
+	Channelname string
+	From        string
+	Content     string
 }
 
 func (ci *ChannelInfo) Init(channelname string, users []string) {
@@ -335,18 +335,18 @@ func (s *Server) GetMessageFromQueue(user string) ([]*QueueMessage, error) {
 	if data != "" {
 		lines := strings.Split(data, "\n")
 		if len(lines) > 0 {
-			lines = lines[:len(lines) - 1]
+			lines = lines[:len(lines)-1]
 		}
-		var queue[]*QueueMessage
+		var queue []*QueueMessage
 		for i := 0; i < len(lines); i++ {
 			elements := strings.Split(lines[i], " ")
 			message := new(QueueMessage)
-			message.channelname = elements[0]
-			message.from = elements[1]
-			message.content = elements[2]
+			message.Channelname = elements[0]
+			message.From = elements[1]
+			message.Content = elements[2]
 			if len(elements) > 3 {
 				for i := 3; i < len(elements); i++ {
-					message.content += fmt.Sprintf(" %s", elements[i])
+					message.Content += fmt.Sprintf(" %s", elements[i])
 				}
 			}
 			queue = append(queue, message)

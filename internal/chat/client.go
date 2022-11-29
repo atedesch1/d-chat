@@ -24,6 +24,7 @@ type Client struct {
 
 	peersMutex sync.Mutex
 	peers      map[string]Peer
+	channel    string
 
 	zk *server.Server
 }
@@ -40,8 +41,9 @@ func NewClient(username string, ip string, port uint) *Client {
 				Port: uint32(port),
 			},
 		},
-		peers: make(map[string]Peer),
-		zk:    zk,
+		peers:   make(map[string]Peer),
+		channel: "",
+		zk:      zk,
 	}
 }
 

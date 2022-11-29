@@ -13,7 +13,7 @@ import (
 func (c *Client) SendMessage(
 	ctx context.Context,
 	msg *chat_message.ContentMessage) (*chat_message.AckMessage, error) {
-	fmt.Println(msg.From.Username, ":", msg.Content)
+	fmt.Printf("%s: %s\n", msg.From.Username, msg.Content)
 	return &chat_message.AckMessage{
 		From:   &c.User,
 		SentAt: timestamppb.Now(),
