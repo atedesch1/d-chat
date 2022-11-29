@@ -6,6 +6,7 @@ import (
 
 	tm "github.com/buger/goterm"
 	"github.com/decentralized-chat/internal/chat"
+	"github.com/decentralized-chat/pkg/util"
 )
 
 var (
@@ -28,6 +29,7 @@ func main() {
 	tm.Flush()
 
 	fmt.Println("Decentralized-Chat")
+	fmt.Printf("Username: %s, Listening on: %s\n", c.User.Username, util.AddrToHost(c.User.Addr))
 
 	go c.ListenForConnections()
 
