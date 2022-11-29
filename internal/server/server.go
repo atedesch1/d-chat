@@ -106,7 +106,7 @@ func (s *Server) RegisterUser(user string, ipv4 string, port string, publicKey s
 	zookeeper.SetZNode(s.conn, usersPath, strconv.Itoa(numberOfUsersUpdated), version)
 
 	userPath := fmt.Sprintf("%s/id%d", usersPath, numberOfUsersUpdated)
-	userData := fmt.Sprintf("username %s\nipv4 %s\nport %s\npublic-key %s", user, ipv4, publicKey)
+	userData := fmt.Sprintf("username %s\nipv4 %s\nport %s\npublic-key %s", user, ipv4, port, publicKey)
 	flagPermanent := int32(0)
 	_, err := zookeeper.CreateZNode(s.conn, userPath, flagPermanent, userData)
 	return err
@@ -129,12 +129,11 @@ func (s *Server) SetUserOnline(user string) error {
 }
 
 func (s *Server) IsUserRegistered(user string) bool {
-	userId, err := s.GetUserIdFromUsername(user)
+	_, err := s.GetUserIdFromUsername(user)
 	if err != nil {
-		log.Fatal(err)
+		return false
 	}
-	userExists := zookeeper.CheckZNode(s.conn, fmt.Sprintf("%s/id%d", usersPath, userId))
-	return userExists
+	return true
 }
 
 func (s *Server) IsUserInsideChannel(channelname string, user string) bool {
@@ -170,9 +169,9 @@ func (s *Server) IsUserOnline(user string) (bool, error) {
 }
 
 func (s *Server) RegisterChannel(channelName string, user string) error {
-	userId, err := s.GetUserIdFromUsername(user)
-	if err != nil {
-		log.Fatal(err)
+	status := s.IsUserRegistered(user)
+	if status == false {
+		return errors.New("cannot register a channel to a non-existent user")
 	}
 	channelsExists := zookeeper.CheckZNode(s.conn, channelsPath)
 	if channelsExists == false {
@@ -186,9 +185,9 @@ func (s *Server) RegisterChannel(channelName string, user string) error {
 	zookeeper.SetZNode(s.conn, channelsPath, strconv.Itoa(numberOfChannelsUpdated), version)
 
 	channelPath := fmt.Sprintf("%s/ch%d", channelsPath, numberOfChannelsUpdated)
-	channelData := fmt.Sprintf("channelname %s\nusers id%d", channelName, userId)
+	channelData := fmt.Sprintf("channelname %s\nusers %s", channelName, user)
 	flagPermanent := int32(0)
-	_, err = zookeeper.CreateZNode(s.conn, channelPath, flagPermanent, channelData)
+	_, err := zookeeper.CreateZNode(s.conn, channelPath, flagPermanent, channelData)
 	return err
 }
 
