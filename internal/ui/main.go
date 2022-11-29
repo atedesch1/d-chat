@@ -34,6 +34,13 @@ func (m MainModel) getCurrentModel() tea.Model {
 	return m.models[m.currentView]
 }
 
+func (m MainModel) viewportDimensionsCmd() tea.Msg {
+	return tea.WindowSizeMsg{
+		Width:  m.width,
+		Height: m.height,
+	}
+}
+
 func (m MainModel) Init() tea.Cmd {
 	return m.getCurrentModel().Init()
 }
@@ -54,6 +61,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
 		}
+
+	case RequestViewportDimensionsMsg:
+		cmds = append(cmds, m.viewportDimensionsCmd)
 
 	case EnteredValidUsernameMsg:
 		m.currentView = channelsView
