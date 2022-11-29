@@ -17,7 +17,7 @@ The chat client has commands to list, create, join and disconnect from a channel
 - `$list`: list all channels
 - `$create <channel-name>`: creates a new channel
 - `$join <channel-name>`: joins and connects to all peers inside a channel
-- `$disconnect`: disconnects from the current channel
+- `$leave`: leaves the current channel
 
 ## Sending Messages
 
