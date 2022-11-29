@@ -290,3 +290,14 @@ func GenerateChannelData(channelname string, users []string) string {
 	}
 	return data
 }
+
+func (s *Server) GetUserData(user string) (*UserInfo, error) {
+	id, err := s.GetUserIdFromUsername(user)
+	if err != nil {
+		log.Fatal(err)
+		return nil, nil
+	}
+	data, _ := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/id%d", usersPath, id))
+	ui := ParseUserData(data)
+	return ui, nil
+}

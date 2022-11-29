@@ -64,6 +64,12 @@ var _ = Describe("Server", func() {
 			status, err = s.IsUserOnline(username)
 			Expect(err).To(BeNil())
 			Expect(status).To(Equal(true))
+			ui, uiErr := s.GetUserData(username)
+			Expect(uiErr).To(BeNil())
+			Expect(ui.username).To(Equal(username))
+			Expect(ui.ipv4).To(Equal(ipv4))
+			Expect(ui.port).To(Equal(port))
+			Expect(ui.publicKey).To(Equal(publicKey))
 		})
 
 		It("Should be able to create a channel", func() {
