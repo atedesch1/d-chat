@@ -204,7 +204,7 @@ func (s *Server) AddUserToChannel(channelName string, user string) error {
 		data, version := zookeeper.GetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId))
 		ci := ParseChannelData(data)
 		if ci.channelname == channelName {
-			ci.users = append(ci.users, fmt.Sprintf(" %s\n", user))
+			ci.users = append(ci.users, fmt.Sprintf("%s\n", user))
 			channelDataStr := GenerateChannelData(ci.channelname, ci.users)
 			zookeeper.SetZNode(s.conn, fmt.Sprintf("%s/%s", channelsPath, channelId), channelDataStr, version)
 			return nil
