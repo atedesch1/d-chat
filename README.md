@@ -1,4 +1,4 @@
-# Decentralized Chat
+# D-Chat
 
 ## Step by Step
 
